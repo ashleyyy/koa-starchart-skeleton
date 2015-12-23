@@ -1,7 +1,11 @@
 $(function() {
 
+  var userId = 2;
+
   console.log("in applications.js file");
   console.log(window.location.path);
+
+  var _tasks;
 
   var str = window.location.pathname;
 
@@ -27,38 +31,8 @@ $(function() {
 
         // var userId = $('.something_to_get_userid').text();
 
-        var userId = 2;
-
-        $.get('users/' + userId + '/tasks', function(tasks){
-
-          // find the <ul>
-          var $taskUl = $('ul.tasks');
-
-          var $taskLi;
-
-          // iterate thru returned array and load <li>s
-          tasks.forEach(function(task) {
-
-             $taskLi = $('<li>');
-
-             // <a href data-toggle="modal" data-target="#myModal">Do laundry</a>
-
-             $taskAnchor = $('<a>').text(task.description)
-                                   .attr({
-                                          'id':   task.id.toString(),
-                                          'href': '',
-                                          'data-toggle': "modal",
-                                          'data-target': "#myModal"
-                                        });
-
-             $taskLi.append($taskAnchor);
-
-             $taskUl.append($taskLi);
-          });
-
-          var temp = 1;
-
-        });
+        // load user tasks
+        reloadTasks();
 
   // ===========================================================
   //
@@ -69,9 +43,11 @@ $(function() {
   // ============================================================  
 
   function reloadTasks() {
-        $(".tasks").empty();
-    
+    $(".tasks").empty();
+
     $.get('users/' + userId + '/tasks', function(tasks){
+
+      _tasks = tasks;
 
       // find the <ul>
       var $taskUl = $('ul.tasks');
@@ -81,25 +57,38 @@ $(function() {
       // iterate thru returned array and load <li>s
       tasks.forEach(function(task) {
 
-        $taskLi = $('<li>');
+         $taskLi = $('<li>');
 
-       // <a href data-toggle="modal" data-target="#myModal">Do laundry</a>
+         // <a href data-toggle="modal" data-target="#myModal">Do laundry</a>
 
-        $taskAnchor = $('<a>').text(task.description)
-                             .attr({
-                                    'id':   task.id.toString(),
-                                    'href': '',
-                                    'data-toggle': "modal",
-                                    'data-target': "#myModal"
-                                  });
+         $taskAnchor = $('<a>').text(task.description)
+                               .attr({
+                                      'id':   task.id.toString(),
+                                      'href': '',
+                                      'data-toggle': "modal",
+                                      'data-target': "#myModal"
+                                    });
 
-        $taskLi.append($taskAnchor);
+         $taskLi.append($taskAnchor);
 
-        $taskUl.append($taskLi);
+         $taskUl.append($taskLi);
       });
 
     });
-  };       
+  }; 
+
+  // ===========================================================
+  //
+  //
+  //   Function to find task by id
+  //
+  // ============================================================
+
+  function findByTaskId(task_id) {
+    return $.grep(_tasks, function( n ) {
+      return n.id === parseInt(task_id);
+    })[0]; 
+  };
 
   // ===========================================================
   //
@@ -114,12 +103,11 @@ $(function() {
     var taskDescription = $("#description").val();
     var dueDate = $("#due_date").val();
     var taskPriority = $("#priority").val();
-    var recurringCheckbox = $("#recurring").val();
+    var recurringCheckbox = $("#recurring").is(":checked");
 
     var myTask = {description: taskDescription, due_date: dueDate, priority: taskPriority, recurring: recurringCheckbox, postponed: false, completed: false};
 
     $.post('/users/' + userId + '/tasks', myTask, function(task) { 
-      console.log(task);
     $('#createTaskForm').trigger("reset"); 
     $("#addTaskModal").modal('hide');  
     reloadTasks();
@@ -147,6 +135,7 @@ $(function() {
     var taskId = $('div.details').attr("id");
     console.log("inside prepopulation edit form");
     console.log(taskId);
+    // var currentTask = findByTaskId(parseInt(taskId));
     $(".taskId").attr({
                       'id':   taskId
                       });
@@ -199,15 +188,12 @@ $(function() {
       url: '/users/' + userId + '/tasks/' + taskId,
       type: 'DELETE',
       success: function() {
+        reloadTasks();
         console.log("done with delete");
       }
     });
     //trying to reload tasks after delete is clicked
     $("#myModal").modal('hide');  
-    reloadTasks();
-
-    console.log('boo');
-
   });
 
   // ===========================================================
@@ -217,13 +203,29 @@ $(function() {
   //
   // ============================================================
 
-    // $("#procrastinate").on("click", function() {
+    $("#procrastinate").on("click", function() {
 
-    //   var taskId = $('div.details').attr("id");
-    //   $("#myModal").modal('hide');  
-    //   alert("arr matey");
+      var taskId = $('div.details').attr("id");
+      console.log(taskId);
+      var task = findByTaskId(taskId);
+      console.log(task);
+      task.postponed = true;
+      
+      $.ajax({
+            type: "PUT",
+            url:  'users/' + userId + '/tasks/' + taskId,
+            contentType: "application/json",
+            data: JSON.stringify(task),
+            success: function(data) {
+                      reloadTasks();
+                    },
+            failure: function(err) {
+                      alert(err);
+                    }
+        }); 
+      $("#myModal").modal('hide');  
 
-    // });
+    });
 
 
         // ===========================================================
@@ -238,10 +240,22 @@ $(function() {
           // load user's task data into modal
 
           event.preventDefault();
+          var thisTask = findByTaskId(this.id);
+          console.log(thisTask);
+          console.log(thisTask.due_date);
+          var desc = thisTask.description.toString;
+          $('.taskDetails').html(
+            "Task: " + thisTask.description + "<br/>" + 
+            "Due date: " + thisTask.due_date.substring(0,10)  + "<br/>" +
+            "Recurring: " + (thisTask.recurring ? "Yes" : "No")  + "<br/>" +
+            "Completed: " + (thisTask.completed ? "Yes" : "No")  + "<br/>" +
+            "Postponed: " + (thisTask.postponed ? "Yes" : "No")  + "<br/>" +
+            "Priority: " + thisTask.priority  + "<br/>"
+            );
+          $('div.details').attr({
+            'id': $(this).attr("id")
+          });  
 
-          $('div.details').text( $( this ).text() ).attr({
-                                                        'id':   $(this).attr("id")
-                                                        });
         });
 
 
