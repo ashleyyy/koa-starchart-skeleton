@@ -25,6 +25,24 @@ function reloadTasks(userId) {
 
     var $taskAnchor;
 
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    // ===========================================================
+    //  get random task to display in header
+    //
+    // ===========================================================
+
+    var max = allTasks.length;
+    var min = 0;
+
+    var random_index = getRandomInt(min, max);
+
+    var temp = allTasks[random_index].description;
+
+    $('#header-task').text(allTasks[random_index].description);
+
     // iterate thru returned array and load <li>s
     allTasks.forEach(function(task) {
 
@@ -83,10 +101,6 @@ function reloadTasks(userId) {
         star.TaskId = taskId;
 
         star.UserId = userId;   /// &&&
-
-        function getRandomInt(min, max) {
-          return Math.floor(Math.random() * (max - min)) + min;
-        }
 
         star.x_cord = getRandomInt(1, 100);;
         star.y_cord = getRandomInt(1, 100);;
