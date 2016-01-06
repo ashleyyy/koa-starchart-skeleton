@@ -33,13 +33,16 @@ function reloadTasks(userId) {
     //  get random task to display in header
     //
     // ===========================================================
-
     var max = allTasks.length;
     var min = 0;
+    var random_index;
+    var random_task;
 
-    var random_index = getRandomInt(min, max);
-
-    var temp = allTasks[random_index].description;
+    do {
+      random_index = getRandomInt(min, max);
+      random_task = allTasks[random_index];
+    }
+    while (random_task.completed) ;
 
     $('#header-task').text(allTasks[random_index].description);
 
