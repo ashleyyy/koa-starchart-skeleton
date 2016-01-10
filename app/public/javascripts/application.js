@@ -77,18 +77,14 @@ var tasklistItemHTML2 =
       '       <td class="left-column"><label for="recurring">Recurring:</label></td>' +
       '       <td class="right-column"><input type="checkbox" name="recurring" id="ERecurring"></td>' +
       '     </tr>' +
-      '     <tr>' +
-      '        <td class="left-column">' +
-      '         <button type="button" class="btn btn-default btn-xs" id="cancel">Cancel</button>' +
-      '          <input  type="submit" class="btn btn-primary btn-xs" id="saveEditButton">' +
-      '       </td>' +
-      '        <td class="right-column">' +
-      '          <button type="button" class="btn btn-default btn-xs" id="deleteTask">Delete Task</button>' +
-      '          <button type="button" class="btn btn-default btn-xs" id="procrastinate">Procrastinate</button>' +
-      '        </td>' +
-      '      </tr>' +
-      '    </table>' +
-      ' </form>' +
+      '   </table>' +
+      '   <div class="expandedTaskButtons">' +
+      '     <button type="button" class="btn btn-default btn-xs" id="cancel">Cancel</button>' +
+      '     <input  type="submit" class="btn btn-primary btn-xs" id="saveEditButton">' +
+      '     <button type="button" class="btn btn-default btn-xs" id="deleteTask">Delete Task</button>' +
+      '     <button type="button" class="btn btn-default btn-xs" id="procrastinate">Procrastinate</button>' +
+      '   </div>' +
+      '  </form>' +
      '</div>';
 
 var tasklistItemHTML3 =
@@ -373,12 +369,14 @@ dailyTaskRefresh(userId);
                                           'id':   task.id.toString(),
                                           'data-priority': task.priority,
                                         });
+        $taskLi.find(".taskAnchor").addClass("incomplete");                           
 
         //for color change upon clicking procrastinate button:
         var procrastinateButtonSelector = "#D" + task.id + " " + "button#procrastinate";
-        console.log(procrastinateButtonSelector);
+        // console.log(procrastinateButtonSelector);
         if (task.postponed === true){
           $taskLi.find(".taskAnchor").addClass("postponed");
+          $taskLi.find(".taskAnchor").removeClass("incomplete");
           $(procrastinateButtonSelector).html('Undo Procrastinate');
         } else {
           $taskLi.find(".taskAnchor").removeClass("postponed");
@@ -883,10 +881,18 @@ $(function() {
         // ============================================================
 
         $("#sortByPriority").on('click', function() {
-          tinysort('ul.tasks>li', {selector: '.taskAnchor', data: 'priority', order: 'desc'});
-          tinysort('ul.tasks>li', {selector: '.taskAnchor.complete_span_disabled', attr: 'priority', order: 'desc'});
-        });
 
+          // first... if the task is incomplete, sort by priority descending
+          tinysort('ul.tasks>li', {selector: '.taskAnchor.incomplete', data: 'priority', order: 'desc'});
+          // second... if the task is postponed, sort by priority descending
+          tinysort('ul.tasks>li', {selector: '.taskAnchor.postponed', data: 'priority', order: 'desc'});
+          // lastly... if the task is complete, sort by priority descending
+          tinysort('ul.tasks>li', {selector: '.taskAnchor.complete_span_disabled', attr: 'priority', order: 'desc'});
+          
+          
+          
+
+        }); //end of sort  
 
    } // end of user's Page  !!!
 
