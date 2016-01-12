@@ -135,10 +135,37 @@ function getRandomInt(min, max) {
 }
 
 function resetUserStars(user_id) {
-  console.log("FIRINGGGG");
-
   // later include jquery-confirm plugin for nicer confirm box
-  var response = confirm("Are you sure you'd like to clear the stars from your sky?\nThis action cannot be undone.");
+  var response = 
+    $.confirm({
+      title: "Reset Sky",
+      content: "Are you sure you'd like to clear the stars from your sky?<br>This action cannot be undone.",
+      columnClass: 'col-md-4 col-md-offset-4',
+      confirm: function () {
+        $.get('/users/' + user_id + '/tasks', function(tasks) {   
+          tasks.forEach(function (task) {
+            if (task.completed) {
+              $.ajax({
+                url: '/users/' + user_id + '/tasks/' + task.id,
+                type: 'DELETE',
+                success: function() {
+                  console.log("stars deleted");
+                }
+              });
+            }  
+          });
+        });
+        $.alert({
+          title: "Success",
+          content: "Stars have been removed.",
+          confirm: function(){
+            window.location.href = "/"; 
+          }
+        });        
+      }
+      // window.location.href = "/"; 
+    });
+
   if (response === true) {
     $.get('/users/' + user_id + '/tasks', function(tasks) {   
       tasks.forEach(function (task) {
@@ -152,7 +179,11 @@ function resetUserStars(user_id) {
           });
         }  
       });
-      alert("Stars have been removed.");
+      // $.alert({
+      //   title: 'Stars have been removed.',
+      //   content: 'Simple alert!',
+      // });
+      
       window.location.href = "/";  
     });   
   }
@@ -652,6 +683,7 @@ $(function() {
           // keep $("#createTaskForm").show(); below so that form shows when
           // creating new task (it gets hidden when a task with a future due 
           // date is created)
+          $('#createTaskForm').trigger("reset");
           $("#createTaskForm").show();
 
           var objToday = new Date();
